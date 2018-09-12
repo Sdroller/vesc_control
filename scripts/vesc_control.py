@@ -4,14 +4,15 @@ import rospy
 from std_msgs.msg import *
 
 topic_motor_throttle = "/commands/motor/current"
-topic_dist_to_person = "/distance_to_person"
+topic_dist_to_person_raw = "/distance_to_person"
+topic_dist_to_person_filtered = "/distance_to_person_filtered"
 
 class vesc_control:
     def __init__(self):
         self.pub = rospy.Publisher(topic_motor_throttle,
                                     Float64, queue_size=10)
 
-        self.sub = rospy.Subscriber(topic_dist_to_person,
+        self.sub = rospy.Subscriber(topic_dist_to_person_filtered,
                                     Float32, self.callback,  queue_size=10)
 
         # variables for the PID
