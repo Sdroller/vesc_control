@@ -72,11 +72,13 @@ class vesc_control:
 
         # calculate the throttle reading necessary to turn the stroller
         # this is another basic PID loop tying the deflection angle to the wheel speeds
-        error = centroid_pos_x - self.img_width/2
-        asym = error * self.kp_x
-        self.motor_throttle_asym_L = asym
-        self.motor_throttle_asym_R = -asym
-        rospy.loginfo("Motor Throttle Asymmetric: %f", self.motor_throttle_sym)
+        # centroid reads 0 when no person is present
+        if centroid_pos_x < 1:
+            error = centroid_pos_x - self.img_width/2
+            asym = error * self.kp_x
+            self.motor_throttle_asym_L = asym
+            self.motor_throttle_asym_R = -asym
+            rospy.loginfo("Motor Throttle Asymmetric: %f", self.motor_throttle_sym)
         self.publish_throttle()
 
     def publish_throttle(self):
