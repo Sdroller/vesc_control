@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # license removed for brevity
 import rospy
+import numpy as np
 from std_msgs.msg import *
 
 topic_motor_throttle_L = 'set_throttle_L'
@@ -38,8 +39,8 @@ class vesc_control:
 
         # variables for the PID
         self.setpoint = 0.7  # in meters
-        self.kp_z = 3000.0 # gain for distance pid
-        self.kp_x = 3000.0 # gain for turning pid
+        self.kp_z = 10000.0 # gain for distance pid
+        self.kp_x = 1000.0 # gain for turning pid
         self.wheelbase = 36 # inches
         self.wheel_radius = 8 # inches
         self.motor_throttle_asym_L = 0.0
@@ -73,7 +74,7 @@ class vesc_control:
         # calculate the throttle reading necessary to turn the stroller
         # this is another basic PID loop tying the deflection angle to the wheel speeds
         # centroid reads 0 when no person is present
-        if centroid_pos_x < 1:
+        if np.abs(centroid_pos_x - 336)/672 < 0.1:
             error = centroid_pos_x - self.img_width/2
             asym = error * self.kp_x
             self.motor_throttle_asym_L = asym
@@ -86,7 +87,10 @@ class vesc_control:
         throttle_L = self.motor_throttle_sym + self.motor_throttle_asym_L
         throttle_R = self.motor_throttle_sym + self.motor_throttle_asym_R
         rospy.loginfo("Motor Throttle L: %f", throttle_L)
-        rospy.loginfo("Motor Throttle R: %f", throttle_R)        
+        rospy.loginfo("Motor Throttle R: %f", throttle_R)   
+	if throttle_L >= 32767 or throttle_R >= 32767:
+		throttle_L = 32767
+		throttle_r = 32767
         self.pub_TL.publish(throttle_L)
         self.pub_TR.publish(throttle_R)
 
