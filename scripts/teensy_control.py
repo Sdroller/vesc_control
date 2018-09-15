@@ -2,7 +2,7 @@
 # license removed for brevity
 import rospy
 import numpy as np
-from std_msgs.msg import *
+from std_msgs.msg import Float32
 
 topic_motor_throttle_L = 'set_throttle_L'
 topic_motor_throttle_R = 'set_throttle_R'
@@ -20,16 +20,16 @@ topic_position_x = 'centroid_pos_x'
 class vesc_control:
     def __init__(self):
         self.pub_TL = rospy.Publisher(
-            topic_motor_throttle_L, Int16, queue_size=10)
+            topic_motor_throttle_L, Float32, queue_size=10)
 
         self.pub_TR = rospy.Publisher(
-            topic_motor_throttle_R, Int16, queue_size=10)
+            topic_motor_throttle_R, Float32, queue_size=10)
         
         self.pub_BL = rospy.Publisher(
-            topic_motor_brake_L, Int16, queue_size=10)
+            topic_motor_brake_L, Float32, queue_size=10)
                 
         self.pub_BR = rospy.Publisher(
-            topic_motor_brake_R, Int16, queue_size=10)
+            topic_motor_brake_R, Float32, queue_size=10)
 
         self.sub_z = rospy.Subscriber(topic_dist_to_person,
                                     Float32, self.callback_z,  queue_size=10)
@@ -57,10 +57,10 @@ class vesc_control:
 
         # A reading of 0 means that the distance is invalid
         # calculate the throttle from the PID to keep the distance at the setpoint
-        if centroid_pos_z > 0.7:
+        if centroid_pos_z > 0.35:
             error = centroid_pos_z - self.setpoint
             self.motor_throttle_sym = error * self.kp_z
-            rospy.loginfo("Motor Throttle Symmetric: %f", self.motor_throttle_sym)
+            rospy.loginfo("Throttle Symmetric: %f", self.motor_throttle_sym)
         self.publish_throttle()    
     
     def callback_x(self, sub_position_x):
@@ -74,12 +74,12 @@ class vesc_control:
         # calculate the throttle reading necessary to turn the stroller
         # this is another basic PID loop tying the deflection angle to the wheel speeds
         # centroid reads 0 when no person is present
-        if np.abs(centroid_pos_x - 336)/672 < 0.1:
+        if np.abs(centroid_pos_x - 336)/672 > 0.1: # if centroid is >10% off center
             error = centroid_pos_x - self.img_width/2
             asym = error * self.kp_x
             self.motor_throttle_asym_L = asym
             self.motor_throttle_asym_R = -asym
-            rospy.loginfo("Motor Throttle Asymmetric: %f", self.motor_throttle_sym)
+            rospy.loginfo("Throttle Asymmetric: %f", self.motor_throttle_sym)
         self.publish_throttle()
 
     def publish_throttle(self):
@@ -88,9 +88,10 @@ class vesc_control:
         throttle_R = self.motor_throttle_sym + self.motor_throttle_asym_R
         rospy.loginfo("Motor Throttle L: %f", throttle_L)
         rospy.loginfo("Motor Throttle R: %f", throttle_R)   
-	if throttle_L >= 32767 or throttle_R >= 32767:
-		throttle_L = 32767
-		throttle_r = 32767
+        if throttle_L > 100:
+            throttle_L = 100
+        if throttle_R > 100:
+            throttle_R = 100
         self.pub_TL.publish(throttle_L)
         self.pub_TR.publish(throttle_R)
 
