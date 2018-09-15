@@ -39,14 +39,14 @@ class vesc_control:
 
         # variables for the PID
         self.setpoint = 0.7  # in meters
-        self.kp_z = 10000.0 # gain for distance pid
+        self.kp_z = 1000.0 # gain for distance pid
         self.kp_x = 1000.0 # gain for turning pid
         self.wheelbase = 36 # inches
         self.wheel_radius = 8 # inches
         self.motor_throttle_asym_L = 0.0
         self.motor_throttle_asym_R = 0.0
         self.motor_throttle_sym = 0.0
-        self.img_width = 376
+        self.img_width = 672
 
     def callback_z(self, sub_position_z):
         # subrcriber provides a data and the throttle and brake topics are updated
@@ -74,8 +74,8 @@ class vesc_control:
         # calculate the throttle reading necessary to turn the stroller
         # this is another basic PID loop tying the deflection angle to the wheel speeds
         # centroid reads 0 when no person is present
-        if np.abs(centroid_pos_x - 336)/672 > 0.1: # if centroid is >10% off center
-            error = centroid_pos_x - self.img_width/2
+        error = centroid_pos_x - self.img_width/2 # diff from center of image
+        if np.abs(error)/self.img_width > 0.1: # if centroid is >10% off center
             asym = error * self.kp_x
             self.motor_throttle_asym_L = asym
             self.motor_throttle_asym_R = -asym
