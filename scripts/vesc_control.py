@@ -3,13 +3,18 @@
 import rospy
 from std_msgs.msg import *
 
-topic_motor_throttle = "/commands/motor/current"
+topic_motor_throttle_L = "/motor_L/commands/motor/current"
+topic_motor_throttle_R = "/motor_R/commands/motor/current"
+
 topic_dist_to_person_raw = "/distance_to_person"
 topic_dist_to_person_filtered = "/distance_to_person_filtered"
 
 class vesc_control:
     def __init__(self):
-        self.pub = rospy.Publisher(topic_motor_throttle,
+        self.pub_L = rospy.Publisher(topic_motor_throttle_L,
+                                    Float64, queue_size=10)
+
+        self.pub_R = rospy.Publisher(topic_motor_throttle_R,
                                     Float64, queue_size=10)
 
         self.sub = rospy.Subscriber(topic_dist_to_person_filtered,
@@ -17,7 +22,7 @@ class vesc_control:
 
         # variables for the PID
         self.setpoint = 0.7  # in meters
-        self.kp = 5.0
+        self.kp = 2.0
 
     def callback(self, sub_distance_to_person):
         # PID code
@@ -26,11 +31,16 @@ class vesc_control:
         motor_throttle = 0.0
 
         # A reading of 0 means that the distance is invalid
-        if distance_to_person > 0.7:
+        if (distance_to_person > 0.7) or (distance_to_person < 1.0):
             error = distance_to_person - self.setpoint
             motor_throttle = error * self.kp
-            rospy.loginfo("Motor Throttle: %f", motor_throttle)
-        self.pub.publish(motor_throttle)
+            #motor_throttle = 1.0
+	    
+	else:
+	    motor_throttle = 0.0
+	rospy.loginfo("Motor Throttle: %f", motor_throttle)
+        self.pub_L.publish(motor_throttle)
+	self.pub_R.publish(-1*motor_throttle)
 
 
 def main(args):
