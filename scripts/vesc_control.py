@@ -28,8 +28,8 @@ class vesc_control:
 
         # variables for the PID
         self.setpoint = 1.25  # in meters
-        self.kp_x = 10000.0
-	self.kp_y = 50.0
+        self.kp_x = 2500.0
+	self.kp_y = 5.0
 
     def callback(self, sub_position_x, sub_position_y):
 
@@ -69,8 +69,10 @@ class vesc_control:
 
 def main(args):
     '''Initializes and cleanup ros node'''
+    rospy.init_node("vesc_controL_node", anonymous=True)
     vc = vesc_control()
-    rospy.init_node('vesc_control_node', anonymous=True)
+    rospy.loginfo("Vesc_control constructor finished")
+    #rospy.init_node('vesc_control_node', anonymous=True)
     rospy.loginfo("Yolo Depth Measure node started")
 
     try:
